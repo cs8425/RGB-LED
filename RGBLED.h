@@ -15,6 +15,8 @@
 #define LED_strip(X, data) LED_strip_t X = { .states = data, .idx = 0, .nidx = 0, .timeout = 1, .dir = 0, .step = { .R = 0, .G = 0, .B = 0 }, .out = { .R = 0, .G = 0, .B = 0 } }
 #define L(C, T, N) {  .color = &C, .time = T, .next = N }
 
+// define this your self!!
+extern void LED_OUT(int16_t, int16_t, int16_t);
 
 typedef struct LED_color_s
 {
@@ -27,7 +29,6 @@ typedef struct LED_state_s
 {
     LED_color_t *color;
     uint16_t time;
-    /*uint8_t div;*/
     uint8_t next;
 } LED_state_t;
 
@@ -41,8 +42,6 @@ typedef struct LED_strip_s
     LED_color_t step;
     LED_color_t out;
 } LED_strip_t;
-
-extern void LED_OUT(int16_t, int16_t, int16_t);
 
 uint16_t find_next_idx(uint16_t idx, uint8_t nextStatus, uint8_t dir, uint8_t* ndir){
     *ndir = dir;
@@ -78,6 +77,21 @@ uint16_t find_next_idx(uint16_t idx, uint8_t nextStatus, uint8_t dir, uint8_t* n
     return idx;
 }
 
+void LED_strip_rest(LED_strip_t *strip){
+    strip->idx = 0;
+    strip->nidx = 0;
+    strip->timeout = 1;
+    strip->dir = 0;
+
+    strip->step.R = 0;
+    strip->step.G = 0;
+    strip->step.B = 0;
+
+    strip->out.R = 0;
+    strip->out.G = 0;
+    strip->out.B = 0;
+}
+
 void LED_tick(LED_strip_t *strip){
     uint16_t idx = strip->idx;
     LED_state_t *curr = (strip->states + idx);
@@ -95,25 +109,14 @@ void LED_tick(LED_strip_t *strip){
         if(strip->out.G < 0) strip->out.G = 0;
         if(strip->out.B < 0) strip->out.B = 0;
         LED_OUT(strip->out.R, strip->out.G, strip->out.B);
-        // printf("\t[step]\t%d\t%d\t%d\n", strip->step.R, strip->step.G, strip->step.B);
     }
-    // LED_OUT(strip->out.R, strip->out.G, strip->out.B);
-
-    // printf("\t[curr color]\t%03x\t%03x\t%03x\n", curr->color->R, curr->color->G, curr->color->B);
-    // LED_OUT(curr->color->R, curr->color->G, curr->color->B);
 
     strip->timeout = strip->timeout - 1;
     if(strip->timeout == 0){
         strip->nidx = find_next_idx(idx, nextStatus, strip->dir, &ndir);
-        // printf("\t[status]\t%d\t%d\t%d\t%d\n", idx, nidx, strip->timeout, strip->dir);
-        // printf("\t[status]\t%d\t%d\t%d\n", idx, nidx, nextStatus & FADE_TO_LINEAR);
 
-        // strip->timeout = next->time;
         strip->timeout = curr->time;
 
-        // printf("\t[status]\t%d\t%d\n", idx, strip->timeout);
-        // printf("\t[next color]\t%03x\t%03x\t%03x\n", next->color->R, next->color->G, next->color->B);
-        // LED_OUT(next->color->R, next->color->G, next->color->B);
         LED_OUT(curr->color->R, curr->color->G, curr->color->B);
         strip->out.R = curr->color->R;
         strip->out.G = curr->color->G;
@@ -131,8 +134,6 @@ void LED_tick(LED_strip_t *strip){
 
             strip->step.B = (next->color->B - curr->color->B);
             if(strip->step.B) strip->step.B = strip->step.B / next->time + 1;
-
-            // printf("\t[step]\t%d\t%d\t%d\n", strip->step.R, strip->step.G, strip->step.B);
         }
     }
 
