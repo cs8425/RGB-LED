@@ -23,12 +23,12 @@ typedef struct LED_color_s
     int16_t B;
 } LED_color_t;
 
-typedef struct LED_color_step_s
-{
-    int16_t R;
-    int16_t G;
-    int16_t B;
-} LED_color_step_t;
+// typedef struct LED_color_step_s
+// {
+//     int16_t R;
+//     int16_t G;
+//     int16_t B;
+// } LED_color_step_t;
 
 typedef struct LED_state_s
 {
@@ -91,28 +91,25 @@ void LED_tick(LED_strip_t *strip){
     uint8_t nextStatus = curr->next;
 
     uint8_t ndir = 0;
-    uint16_t nidx = find_next_idx(idx, nextStatus, strip->dir, &ndir);
+    // uint16_t nidx = find_next_idx(idx, nextStatus, strip->dir, &ndir);
+    uint16_t nidx = strip->nidx;
     LED_state_t *next = (strip->states + nidx);
 
     if(nextStatus & FADE_TO_LINEAR){
-        // if(strip->dir){
-        //     strip->out.R -= strip->step.R;
-        //     strip->out.G -= strip->step.G;
-        //     strip->out.B -= strip->step.B;
-        // }else{
-            strip->out.R += strip->step.R;
-            strip->out.G += strip->step.G;
-            strip->out.B += strip->step.B;
-        // }
-        LED_OUT(strip->out.R, strip->out.G, strip->out.B);
+        strip->out.R += strip->step.R;
+        strip->out.G += strip->step.G;
+        strip->out.B += strip->step.B;
+        // LED_OUT(strip->out.R, strip->out.G, strip->out.B);
         // printf("\t[step]\t%d\t%d\t%d\n", strip->step.R, strip->step.G, strip->step.B);
     }
+    LED_OUT(strip->out.R, strip->out.G, strip->out.B);
 
     // printf("\t[curr color]\t%03x\t%03x\t%03x\n", curr->color->R, curr->color->G, curr->color->B);
     // LED_OUT(curr->color->R, curr->color->G, curr->color->B);
 
     strip->timeout = strip->timeout - 1;
     if(strip->timeout == 0){
+        strip->nidx = find_next_idx(idx, nextStatus, strip->dir, &ndir);
         // printf("\t[status]\t%d\t%d\t%d\t%d\n", idx, nidx, strip->timeout, strip->dir);
         // printf("\t[status]\t%d\t%d\t%d\n", idx, nidx, nextStatus & FADE_TO_LINEAR);
 
@@ -131,24 +128,13 @@ void LED_tick(LED_strip_t *strip){
         strip->dir = ndir;
         nextStatus = next->next;
         if(nextStatus & FADE_TO_LINEAR){
-            // printf("\t[status2]\t%d\t%d\t%d\n", idx, nidx, nextStatus & FADE_TO_LINEAR);
-            // curr = next;
-            // nidx = find_next_idx(nidx, nextStatus, strip->dir, &ndir);
-            // next = (strip->states + nidx);
-
-            // printf("\t[status3]\t%d\t%d\t%d\n", idx, nidx, nextStatus & FADE_TO_LINEAR);
-            // printf("\t[nn status]\t%d\n", nidx);
-
             strip->step.R = (next->color->R - curr->color->R);
-            // if(strip->step.R & 0x8000) strip->step.R = -strip->step.R;
             if(strip->step.R) strip->step.R = strip->step.R / next->time + 1;
 
             strip->step.G = (next->color->G - curr->color->G);
-            // if(strip->step.G & 0x8000) strip->step.G = -strip->step.G;
             if(strip->step.G) strip->step.G = strip->step.G / next->time + 1;
 
             strip->step.B = (next->color->B - curr->color->B);
-            // if(strip->step.B & 0x8000) strip->step.B = -strip->step.B;
             if(strip->step.B) strip->step.B = strip->step.B / next->time + 1;
 
             // printf("\t[step]\t%d\t%d\t%d\n", strip->step.R, strip->step.G, strip->step.B);
