@@ -23,13 +23,6 @@ typedef struct LED_color_s
     int16_t B;
 } LED_color_t;
 
-// typedef struct LED_color_step_s
-// {
-//     int16_t R;
-//     int16_t G;
-//     int16_t B;
-// } LED_color_step_t;
-
 typedef struct LED_state_s
 {
     LED_color_t *color;
@@ -91,7 +84,6 @@ void LED_tick(LED_strip_t *strip){
     uint8_t nextStatus = curr->next;
 
     uint8_t ndir = 0;
-    // uint16_t nidx = find_next_idx(idx, nextStatus, strip->dir, &ndir);
     uint16_t nidx = strip->nidx;
     LED_state_t *next = (strip->states + nidx);
 
@@ -99,10 +91,13 @@ void LED_tick(LED_strip_t *strip){
         strip->out.R += strip->step.R;
         strip->out.G += strip->step.G;
         strip->out.B += strip->step.B;
-        // LED_OUT(strip->out.R, strip->out.G, strip->out.B);
+        if(strip->out.R < 0) strip->out.R = 0;
+        if(strip->out.G < 0) strip->out.G = 0;
+        if(strip->out.B < 0) strip->out.B = 0;
+        LED_OUT(strip->out.R, strip->out.G, strip->out.B);
         // printf("\t[step]\t%d\t%d\t%d\n", strip->step.R, strip->step.G, strip->step.B);
     }
-    LED_OUT(strip->out.R, strip->out.G, strip->out.B);
+    // LED_OUT(strip->out.R, strip->out.G, strip->out.B);
 
     // printf("\t[curr color]\t%03x\t%03x\t%03x\n", curr->color->R, curr->color->G, curr->color->B);
     // LED_OUT(curr->color->R, curr->color->G, curr->color->B);
